@@ -35,72 +35,54 @@
 
     <div class="button-group">
         <label>Terrain:</label>
-        <button onclick="setTerrain('grass')">Grass</button>
-        <button onclick="setTerrain('sand')">Sand</button>
-        <button onclick="setTerrain('0')">0</button>
+        <button onclick="setAction('terrain', 'grass')">Grass</button>
+        <button onclick="setAction('terrain', 'sand')">Sand</button>
+        <button onclick="setAction('terrain', '0')">0</button>
     </div>
 
     <div class="button-group">
         <label>Castle:</label>
-        <button onclick="setBuilding('necro')">Necro</button>
-        <button onclick="setBuilding('castle')">Castle</button>
-        <button onclick="setBuilding('0')">0</button>
+        <button onclick="setAction('building', 'necro')">Necro</button>
+        <button onclick="setAction('building', 'castle')">Castle</button>
+        <button onclick="setAction('building', '0')">0</button>
     </div>
 
     <div class="button-group">
         <label>Level:</label>
-        <button onclick="setLevel('1')">1</button>
-        <button onclick="setLevel('2')">2</button>
-        <button onclick="setLevel('0')">0</button>
+        <button onclick="setAction('level', '1')">1</button>
+        <button onclick="setAction('level', '2')">2</button>
+        <button onclick="setAction('level', '0')">0</button>
     </div>
 
-    <div class="status" id="status">Select a hexagon to update its status</div>
+    <div class="status" id="status">Select a brush action and click on a hexagon to update its status</div>
     
     <div class="canvas-container">
-        <canvas id="hexagonCanvas0" width="150" height="150" onclick="selectHexagon(0)"></canvas>
-        <canvas id="hexagonCanvas1" width="150" height="150" onclick="selectHexagon(1)"></canvas>
+        <canvas id="hexagonCanvas0" width="150" height="150" onclick="applyAction(0)"></canvas>
+        <canvas id="hexagonCanvas1" width="150" height="150" onclick="applyAction(1)"></canvas>
     </div>
 
     <script>
-        let selectedHexagon = null;
+        let currentAction = null;
+        let currentValue = null;
         const hexagons = [
             { terrain: '0', building: '0', level: '0' },
             { terrain: '0', building: '0', level: '0' }
         ];
 
-        function setTerrain(value) {
-            if (selectedHexagon !== null) {
-                hexagons[selectedHexagon].terrain = value;
-                updateStatus();
-            }
+        function setAction(action, value) {
+            currentAction = action;
+            currentValue = value;
+            document.getElementById('status').innerText = `Selected ${action} brush with value: ${value}`;
         }
 
-        function setBuilding(value) {
-            if (selectedHexagon !== null) {
-                hexagons[selectedHexagon].building = value;
+        function applyAction(index) {
+            if (currentAction && currentValue !== null) {
+                hexagons[index][currentAction] = currentValue;
                 updateStatus();
             }
-        }
-
-        function setLevel(value) {
-            if (selectedHexagon !== null) {
-                hexagons[selectedHexagon].level = value;
-                updateStatus();
-            }
-        }
-
-        function selectHexagon(index) {
-            selectedHexagon = index;
-            updateStatus();
         }
 
         function updateStatus() {
-            if (selectedHexagon !== null) {
-                const { terrain, building, level } = hexagons[selectedHexagon];
-                document.getElementById('status').innerText = `Hexagon ${selectedHexagon}: ${terrain}, ${building}, L${level}`;
-            } else {
-                document.getElementById('status').innerText = 'Select a hexagon to update its status';
-            }
             drawHexagons();
         }
 
