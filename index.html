@@ -2,144 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hexagon Configuration Tool</title>
+    <title>Interactive Hexagonal Grid Tool</title>
     <style>
-        body {
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
             font-family: Arial, sans-serif;
-        }
-        .button-group {
-            margin-bottom: 10px;
-        }
-        .button-group label {
-            margin-right: 10px;
-        }
-        .button-group button {
-            margin-right: 5px;
-        }
-        .status {
-            margin-top: 20px;
-            font-weight: bold;
+            overflow: hidden;
         }
         canvas {
-            margin-top: 20px;
-            margin-right: 10px;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 90%; /* Leave space for buttons */
+            background-color: #ffffff; /* White background */
         }
-        .canvas-container {
-            display: flex;
+        .controls {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            text-align: center;
+            padding: 10px;
+        }
+        button {
+            padding: 5px 10px;
+            margin-right: 5px;
+            font-size: 16px;
+        }
+        .status {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 5px 10px;
+            border-radius: 5px;
         }
     </style>
 </head>
 <body>
-    <h1>Hexagon Configuration Tool</h1>
-
-    <div class="button-group">
-        <label>Terrain:</label>
+    <canvas id="myCanvas"></canvas>
+    <div class="controls">
         <button onclick="setAction('terrain', 'grass')">Grass</button>
         <button onclick="setAction('terrain', 'sand')">Sand</button>
-        <button onclick="setAction('terrain', '0')">0</button>
-    </div>
-
-    <div class="button-group">
-        <label>Castle:</label>
-        <button onclick="setAction('building', 'necro')">Necro</button>
+        <button onclick="setAction('terrain', 'water')">Water</button>
         <button onclick="setAction('building', 'castle')">Castle</button>
-        <button onclick="setAction('building', '0')">0</button>
+        <button onclick="setAction('building', 'necro')">Necropolis</button>
+        <button onclick="setAction('level', '1')">Level 1</button>
+        <button onclick="setAction('level', '2')">Level 2</button>
+        <button onclick="setAction('level', '3')">Level 3</button>
     </div>
-
-    <div class="button-group">
-        <label>Level:</label>
-        <button onclick="setAction('level', '1')">1</button>
-        <button onclick="setAction('level', '2')">2</button>
-        <button onclick="setAction('level', '0')">0</button>
-    </div>
-
-    <div class="status" id="status">Select a brush action and click on a hexagon to update its status</div>
-    
-    <div class="canvas-container">
-        <canvas id="hexagonCanvas0" width="150" height="150" onclick="applyAction(0)"></canvas>
-        <canvas id="hexagonCanvas1" width="150" height="150" onclick="applyAction(1)"></canvas>
-    </div>
+    <div class="status" id="status">Select a brush action and click on a hexagon to update its status.</div>
 
     <script>
-        let currentAction = null;
-        let currentValue = null;
-        const hexagons = [
-            { terrain: '0', building: '0', level: '0' },
-            { terrain: '0', building: '0', level: '0' }
-        ];
+        let currentAction = 'terrain';
+        let currentValue = 'grass'; // Default value for the brush
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        let hexagons = [];
+        const sideLength = 30; // Adjust size to fit more hexagons
+        const xSpacing = 52; // Calculated from side length
+        const ySpacing = 45; // Calculated from side length
+
+        window.onload = resizeCanvas;
+        window.onresize = resizeCanvas;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight * 0.9; // Adjust height based on controls
+            initializeHexagons();
+            drawHexagonalGrid();
+        }
+
+        function initializeHexagons() {
+            hexagons = [];
+            const numRows = Math.floor(canvas.height / ySpacing);
+            const numHexPerRow = Math.floor(canvas.width / xSpacing);
+
+            for (let row = 0; row < numRows; row++) {
+                for (let col = 0; col < numHexPerRow; col++) {
+                    hexagons.push({
+                        x: col * xSpacing + ((row % 2) * xSpacing / 2),
+                        y: row * ySpacing,
+                        terrain: 'none',
+                        building: 'none',
+                        level: '0'
+                    });
+                }
+            }
+        }
+
+        function drawHexagonalGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            hexagons.forEach(hex => drawHexagon(hex.x, hex.y, hex));
+        }
+
+        function drawHexagon(x, y, hex) {
+            const points = [];
+            for (let i = 0; i < 6; i++) {
+                const angle = Math.PI / 3 * i - Math.PI / 6;
+                points.push({
+                    x: x + sideLength * Math.cos(angle),
+                    y: y + sideLength * Math.sin(angle)
+                });
+            }
+
+            ctx.beginPath();
+            points.forEach((point, index) => {
+                ctx.lineTo(point.x, point.y);
+            });
+            ctx.closePath();
+            ctx.fillStyle = getTerrainColor(hex.terrain);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = 'black';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = '12px Arial';
+            ctx.fillText(`${hex.building}, L${hex.level}`, x, y);
+        }
+
+        function getTerrainColor(terrain) {
+            switch(terrain) {
+                case 'grass': return 'green';
+                case 'sand': return 'yellow';
+                case 'water': return 'blue';
+                default: return 'white';
+            }
+        }
+
+        canvas.addEventListener('click', function(event) {
+            const rect = canvas.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            hexagons.forEach(hex => {
+                const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
+                if (distance < sideLength) {
+                    hex[currentAction] = currentValue;
+                    drawHexagonalGrid();
+                }
+            });
+        });
 
         function setAction(action, value) {
             currentAction = action;
             currentValue = value;
             document.getElementById('status').innerText = `Selected ${action} brush with value: ${value}`;
         }
-
-        function applyAction(index) {
-            if (currentAction && currentValue !== null) {
-                hexagons[index][currentAction] = currentValue;
-                updateStatus();
-            }
-        }
-
-        function updateStatus() {
-            drawHexagons();
-        }
-
-        function drawHexagons() {
-            for (let i = 0; i < hexagons.length; i++) {
-                drawHexagon(`hexagonCanvas${i}`, i);
-            }
-        }
-
-        function drawHexagon(canvasId, index) {
-            const canvas = document.getElementById(canvasId);
-            const ctx = canvas.getContext('2d');
-            const sideLength = 50;
-            const centerX = canvas.width / 2;
-            const centerY = canvas.height / 2;
-            const { terrain, building, level } = hexagons[index];
-            
-            const points = [];
-            for (let i = 0; i < 6; i++) {
-                const angle = Math.PI / 3 * i - Math.PI / 2; // 60 degrees increments with point up
-                points.push({
-                    x: centerX + sideLength * Math.cos(angle),
-                    y: centerY + sideLength * Math.sin(angle),
-                });
-            }
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Set the fill color based on terrain
-            if (terrain === 'grass') {
-                ctx.fillStyle = 'green';
-            } else if (terrain === 'sand') {
-                ctx.fillStyle = 'yellow';
-            } else {
-                ctx.fillStyle = 'white';
-            }
-
-            // Draw the hexagon
-            ctx.beginPath();
-            ctx.moveTo(points[0].x, points[0].y);
-            for (let i = 1; i < points.length; i++) {
-                ctx.lineTo(points[i].x, points[i].y);
-            }
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-
-            // Display the building and level inside the hexagon
-            ctx.fillStyle = 'black';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.font = '16px Arial';
-            ctx.fillText(`${building}, L${level}`, centerX, centerY);
-        }
-
-        // Initial drawing of the hexagons
-        drawHexagons();
     </script>
 </body>
 </html>
