@@ -11,31 +11,40 @@
             height: 100%;
             font-family: Arial, sans-serif;
             overflow: hidden;
+            background: url('assets/fog.png') repeat; /* Set background image to repeat */
         }
         canvas {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 90%; /* Leave space for buttons */
-            background-color: #ffffff; /* White background */
+            height: 100%;
+            background-color: transparent; /* Transparent background to show the repeating background image */
         }
         .controls {
             position: absolute;
-            bottom: 0;
-            width: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            text-align: center;
+            top: 0;
+            right: 0;
+            width: 250px; /* Make the rectangle thicker */
+            height: 100%;
+            background: url('assets/leather.png') repeat; /* Set leather texture as background */
             padding: 10px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1; /* Ensure the controls are above the canvas */
         }
-        button {
-            padding: 5px 10px;
-            margin-right: 5px;
+        .controls select, .controls button {
+            margin-bottom: 10px;
+            padding: 10px;
             font-size: 16px;
+            width: 100%;
         }
         .status {
             position: fixed;
-            top: 10px;
+            bottom: 10px;
             left: 10px;
             background: rgba(255, 255, 255, 0.8);
             padding: 5px 10px;
@@ -46,16 +55,28 @@
 <body>
     <canvas id="myCanvas"></canvas>
     <div class="controls">
-        <button onclick="setAction('terrain', 'grass')">Grass</button>
-        <button onclick="setAction('terrain', 'sand')">Sand</button>
-        <button onclick="setAction('terrain', 'water')">Water</button>
-        <button onclick="setAction('building', 'castle')">Castle</button>
-        <button onclick="setAction('building', 'necro')">Necropolis</button>
-        <button onclick="setAction('level', '1')">Level 1</button>
-        <button onclick="setAction('level', '2')">Level 2</button>
-        <button onclick="setAction('level', '3')">Level 3</button>
+        <select id="tileType" onchange="updateButtons()">
+            <option value="terrain">Terrain</option>
+            <option value="objects">Objects</option>
+            <option value="level">Level</option>
+        </select>
+
+        <div id="terrainButtons">
+            <button onclick="setAction('terrain', 'grass')">Grass</button>
+            <button onclick="setAction('terrain', 'sand')">Sand</button>
+        </div>
+
+        <div id="objectsButtons" style="display:none;">
+            <button onclick="setAction('building', 'castle')">Castle</button>
+            <button onclick="setAction('building', 'necro')">Necropolis</button>
+        </div>
+
+        <div id="levelButtons" style="display:none;">
+            <button onclick="setAction('level', '1')">Level 1</button>
+            <button onclick="setAction('level', '2')">Level 2</button>
+            <button onclick="setAction('level', '3')">Level 3</button>
+        </div>
     </div>
-    <div class="status" id="status">Select a brush action and click on a hexagon to update its status.</div>
 
     <script>
         let currentAction = 'terrain';
@@ -67,12 +88,29 @@
         const xSpacing = 52; // Calculated from side length
         const ySpacing = 45; // Calculated from side length
 
-        window.onload = resizeCanvas;
+        // Preload images
+        const images = {
+            grass: new Image(),
+            sand: new Image(),
+            water: new Image(),
+            castle: new Image(),
+            necro: new Image()
+        };
+        images.grass.src = 'assets/grass.png';
+        images.sand.src = 'assets/sand.png';
+        images.water.src = 'assets/water.png';
+        images.castle.src = 'assets/castle.png';
+        images.necro.src = 'assets/necro.png';
+
+        window.onload = () => {
+            resizeCanvas();
+            loadImages();
+        };
         window.onresize = resizeCanvas;
 
         function resizeCanvas() {
             canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight * 0.9; // Adjust height based on controls
+            canvas.height = window.innerHeight;
             initializeHexagons();
             drawHexagonalGrid();
         }
@@ -110,29 +148,31 @@
                 });
             }
 
+            // Draw hexagon outline
             ctx.beginPath();
             points.forEach((point, index) => {
-                ctx.lineTo(point.x, point.y);
+                if (index === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
             });
             ctx.closePath();
-            ctx.fillStyle = getTerrainColor(hex.terrain);
-            ctx.fill();
+            ctx.strokeStyle = 'lightgray';
             ctx.stroke();
 
+            // Draw image if terrain is set
+            if (hex.terrain !== 'none') {
+                const img = images[hex.terrain];
+                ctx.save();
+                ctx.clip();
+                ctx.drawImage(img, x - sideLength, y - sideLength, sideLength * 2, sideLength * 2);
+                ctx.restore();
+            }
+
+            // Draw building and level text
             ctx.fillStyle = 'black';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             ctx.font = '12px Arial';
             ctx.fillText(`${hex.building}, L${hex.level}`, x, y);
-        }
-
-        function getTerrainColor(terrain) {
-            switch(terrain) {
-                case 'grass': return 'green';
-                case 'sand': return 'yellow';
-                case 'water': return 'blue';
-                default: return 'white';
-            }
         }
 
         canvas.addEventListener('click', function(event) {
@@ -153,6 +193,24 @@
             currentAction = action;
             currentValue = value;
             document.getElementById('status').innerText = `Selected ${action} brush with value: ${value}`;
+        }
+
+        function loadImages() {
+            const promises = [];
+            for (const key in images) {
+                const img = images[key];
+                promises.push(new Promise((resolve) => {
+                    img.onload = resolve;
+                }));
+            }
+            Promise.all(promises).then(drawHexagonalGrid);
+        }
+
+        function updateButtons() {
+            const tileType = document.getElementById('tileType').value;
+            document.getElementById('terrainButtons').style.display = (tileType === 'terrain') ? 'block' : 'none';
+            document.getElementById('objectsButtons').style.display = (tileType === 'objects') ? 'block' : 'none';
+            document.getElementById('levelButtons').style.display = (tileType === 'level') ? 'block' : 'none';
         }
     </script>
 </body>
