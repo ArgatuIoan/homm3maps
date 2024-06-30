@@ -25,22 +25,52 @@
             position: absolute;
             top: 0;
             right: 0;
-            width: 250px; /* Make the rectangle thicker */
+            width: 300px; /* Adjusted width for better layout */
             height: 100%;
-            background: url('assets/leather.png') repeat; /* Set leather texture as background */
+            background: url('assets/leather.png') repeat; /* Keep leather texture as background */
             padding: 10px;
             box-sizing: border-box;
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
             z-index: 1; /* Ensure the controls are above the canvas */
+        }
+        .golden-line {
+            width: 100%;
+            height: 2px;
+            background-color: #FDC22D; /* Gold line */
+            margin: 10px 0;
+        }
+        .controls h3 {
+            color: #FDC22D; /* Gold text color */
+            margin: 10px 0;
         }
         .controls select, .controls button {
             margin-bottom: 10px;
             padding: 10px;
             font-size: 16px;
-            width: 100%;
+            width: 90%; /* Adjusted width for consistency */
+        }
+        .controls button, .controls select {
+            background-color: #FDC22D; /* Gold background */
+            border: 1px solid #000; /* Black border */
+            color: #000; /* Black text */
+            font-weight: bold;
+            text-align: center;
+            border-radius: 3px; /* Rounded corners */
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .controls button:hover, .controls select:hover {
+            background-color: #6B4700; /* Brown background on hover */
+            color: #FDC22D; /* Gold text on hover */
+        }
+        .controls select option {
+            background-color: #FDC22D; /* Gold background */
+            color: #000; /* Black text */
+        }
+        .controls select option:hover {
+            background-color: #6B4700; /* Brown background on hover */
+            color: #FDC22D; /* Gold text on hover */
         }
         .status {
             position: fixed;
@@ -58,6 +88,9 @@
 <body>
     <canvas id="myCanvas"></canvas>
     <div class="controls">
+        <button id="resetButton" onclick="resetMap()">Reset Map</button> <!-- Reset button at the top -->
+        <div class="golden-line"></div>
+        <h3>Tiles:</h3>
         <select id="tileType" onchange="updateButtons()">
             <option value="terrain">Terrain</option>
             <option value="objects">Objects</option>
@@ -82,8 +115,8 @@
     </div>
 
     <script>
-        let currentAction = 'terrain';
-        let currentValue = 'grass'; // Default value for the brush
+        let currentAction = ''; // Default value for the brush is now empty
+        let currentValue = ''; // Default value for the brush is now empty
         const canvas = document.getElementById('myCanvas');
         const ctx = canvas.getContext('2d');
         let hexagons = [];
@@ -113,6 +146,7 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             initializeHexagons();
+            loadHexagonsFromStorage(); // Load saved hexagon state
             drawHexagonalGrid();
         }
 
@@ -149,7 +183,6 @@
                 });
             }
 
-            // Draw hexagon outline
             ctx.beginPath();
             points.forEach((point, index) => {
                 if (index === 0) ctx.moveTo(point.x, point.y);
@@ -159,17 +192,14 @@
             ctx.strokeStyle = 'lightgray';
             ctx.stroke();
 
-            // Draw terrain layer
             if (hex.terrain !== 'none') {
                 drawImageLayer(hex.terrain, x, y);
             }
 
-            // Draw objects layer
             if (hex.objects !== 'none') {
                 drawImageLayer(hex.objects, x, y);
             }
 
-            // Draw level text
             if (hex.level !== '0') {
                 ctx.fillStyle = 'black';
                 ctx.textAlign = 'center';
@@ -197,6 +227,16 @@
             ctx.restore();
         }
 
+        function resetMap() {
+            hexagons.forEach(hex => {
+                hex.terrain = 'none';
+                hex.objects = 'none';
+                hex.level = '0';
+            });
+            drawHexagonalGrid();
+            saveHexagonsToStorage(); // Save the reset state
+        }
+
         canvas.addEventListener('click', function(event) {
             const rect = canvas.getBoundingClientRect();
             const clickX = event.clientX - rect.left;
@@ -204,13 +244,14 @@
 
             hexagons.forEach(hex => {
                 const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
-                if (distance < sideLength) {
+                if (distance < sideLength && currentAction && currentValue) {
                     if (currentAction === 'objects' && hex.terrain === 'none') {
                         showError('Cannot place an object on a tile with no terrain.');
                     } else {
                         hex[currentAction] = currentValue;
                         clearError();
                         drawHexagonalGrid();
+                        saveHexagonsToStorage(); // Save state after each change
                     }
                 }
             });
@@ -219,7 +260,6 @@
         function setAction(action, value) {
             currentAction = action;
             currentValue = value;
-            document.getElementById('status').innerText = `Selected ${action} brush with value: ${value}`;
         }
 
         function loadImages() {
@@ -240,6 +280,17 @@
             document.getElementById('levelButtons').style.display = (tileType === 'level') ? 'block' : 'none';
         }
 
+        function saveHexagonsToStorage() {
+            localStorage.setItem('hexagons', JSON.stringify(hexagons));
+        }
+
+        function loadHexagonsFromStorage() {
+            const savedHexagons = localStorage.getItem('hexagons');
+            if (savedHexagons) {
+                hexagons = JSON.parse(savedHexagons);
+            }
+        }
+
         function showError(message) {
             const statusElement = document.getElementById('status');
             statusElement.innerText = message;
@@ -248,11 +299,11 @@
 
         function clearError() {
             const statusElement = document.getElementById('status');
-            statusElement.innerText = `Selected ${currentAction} brush with value: ${currentValue}`;
+            statusElement.innerText = '';
             statusElement.classList.remove('error');
         }
     </script>
 
-    <div id="status" class="status">Selected terrain brush with value: grass</div>
+    <div id="status" class="status"></div> <!-- Empty status div -->
 </body>
 </html>
