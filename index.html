@@ -83,6 +83,7 @@
         .error {
             color: red;
         }
+        
     </style>
 </head>
 <body>
@@ -100,6 +101,13 @@
         <div id="terrainButtons">
             <button onclick="setAction('terrain', 'grass')">Grass</button>
             <button onclick="setAction('terrain', 'sand')">Sand</button>
+            <button onclick="setAction('terrain', 'dirt')">Dirt</button>
+            <button onclick="setAction('terrain', 'rough')">Rough</button>
+            <button onclick="setAction('terrain', 'snow')">Snow</button>
+            <button onclick="setAction('terrain', 'swamp')">Swamp</button>
+            <button onclick="setAction('terrain', 'water')">Water</button>
+            <button onclick="setAction('terrain', 'lava')">Lava</button>
+            <button onclick="setAction('terrain', 'subterrarean')">ubterrarean</button>
         </div>
 
         <div id="objectsButtons" style="display:none;">
@@ -126,13 +134,35 @@
 
         // Preload images
         const images = {
+            //terrain
             grass: new Image(),
             sand: new Image(),
+            dirt: new Image(),
+            rough: new Image(),
+            snow: new Image(),
+            swamp: new Image(),
+            water: new Image(),
+            lava: new Image(),
+            subterrarean: new Image(),
+            
+            //castles
             castle: new Image(),
             necro: new Image()
         };
+       
+        //Terrain
         images.grass.src = 'assets/grass.png';
         images.sand.src = 'assets/sand.png';
+        images.dirt.src = 'assets/dirt.png';
+        images.rough.src = 'assets/rough.png';
+        images.snow.src = 'assets/snow.png';
+        images.swamp.src = 'assets/swamp.png';
+        images.water.src = 'assets/water.png';
+        images.lava.src = 'assets/lava.png';
+        images.subterrarean.src = 'assets/subterrarean.png';
+
+
+        //castles
         images.castle.src = 'assets/castle.png';
         images.necro.src = 'assets/necro.png';
 
