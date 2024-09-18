@@ -3,93 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Interactive Hexagonal Grid Tool</title>
-    <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-            background: url('assets/fog.png') repeat; /* Set background image to repeat */
-        }
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: transparent; /* Transparent background to show the repeating background image */
-        }
-        .controls {
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 300px; /* Adjusted width for better layout */
-            height: 100%;
-            background: url('assets/leather.png') repeat; /* Keep leather texture as background */
-            padding: 10px;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            z-index: 1; /* Ensure the controls are above the canvas */
-        }
-        .golden-line {
-            width: 100%;
-            height: 2px;
-            background-color: #FDC22D; /* Gold line */
-            margin: 10px 0;
-        }
-        .controls h3 {
-            color: #FDC22D; /* Gold text color */
-            margin: 10px 0;
-        }
-        .controls select, .controls button {
-            margin-bottom: 10px;
-            padding: 10px;
-            font-size: 16px;
-            width: 90%; /* Adjusted width for consistency */
-        }
-        .controls button, .controls select {
-            background-color: #FDC22D; /* Gold background */
-            border: 1px solid #000; /* Black border */
-            color: #000; /* Black text */
-            font-weight: bold;
-            text-align: center;
-            border-radius: 3px; /* Rounded corners */
-            transition: background-color 0.3s, color 0.3s;
-        }
-        .controls button:hover, .controls select:hover {
-            background-color: #6B4700; /* Brown background on hover */
-            color: #FDC22D; /* Gold text on hover */
-        }
-        .controls select option {
-            background-color: #FDC22D; /* Gold background */
-            color: #000; /* Black text */
-        }
-        .controls select option:hover {
-            background-color: #6B4700; /* Brown background on hover */
-            color: #FDC22D; /* Gold text on hover */
-        }
-        .status {
-            position: fixed;
-            bottom: 10px;
-            left: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 5px 10px;
-            border-radius: 5px;
-        }
-        .error {
-            color: red;
-        }
-        
-    </style>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <canvas id="myCanvas"></canvas>
     <div class="controls">
-        <button id="resetButton" onclick="resetMap()">Reset Map</button> <!-- Reset button at the top -->
+        <button id="resetButton" onclick="resetMap()">Reset Map</button>
         <div class="golden-line"></div>
         <h3>Tiles:</h3>
         <select id="tileType" onchange="updateButtons()">
@@ -97,8 +16,7 @@
             <option value="objects">Objects</option>
             <option value="level">Level</option>
         </select>
-
-        <div id="terrainButtons">
+        <div id="terrainButtons" class="button-container">
             <button onclick="setAction('terrain', 'grass')">Grass</button>
             <button onclick="setAction('terrain', 'sand')">Sand</button>
             <button onclick="setAction('terrain', 'dirt')">Dirt</button>
@@ -109,231 +27,23 @@
             <button onclick="setAction('terrain', 'lava')">Lava</button>
             <button onclick="setAction('terrain', 'subterrarean')">Subterrarean</button>
         </div>
-
-        <div id="objectsButtons" style="display:none;">
+        <div id="objectsButtons" class="button-container" style="display:none;">
             <button onclick="setAction('objects', 'castle')">Castle</button>
             <button onclick="setAction('objects', 'necro')">Necropolis</button>
+            <button onclick="setAction('objects', 'tower')">Tower</button>
+            <button onclick="setAction('objects', 'stronghold')">Stronghold</button>
+            <button onclick="setAction('objects', 'dungeon')">Dungeon</button>
+            <button onclick="setAction('objects', 'fortress')">Fortress</button>
+            <button onclick="setAction('objects', 'rampart')">Rampart</button>
+            <button onclick="setAction('objects', 'inferno')">Inferno</button>
         </div>
-
-        <div id="levelButtons" style="display:none;">
+        <div id="levelButtons" class="button-container" style="display:none;">
             <button onclick="setAction('level', '1')">Level 1</button>
             <button onclick="setAction('level', '2')">Level 2</button>
             <button onclick="setAction('level', '3')">Level 3</button>
         </div>
     </div>
-
-    <script>
-        let currentAction = ''; // Default value for the brush is now empty
-        let currentValue = ''; // Default value for the brush is now empty
-        const canvas = document.getElementById('myCanvas');
-        const ctx = canvas.getContext('2d');
-        let hexagons = [];
-        const sideLength = 30; // Adjust size to fit more hexagons
-        const xSpacing = 52; // Calculated from side length
-        const ySpacing = 45; // Calculated from side length
-
-        // Preload images
-        const images = {
-            //terrain
-            grass: new Image(),
-            sand: new Image(),
-            dirt: new Image(),
-            rough: new Image(),
-            snow: new Image(),
-            swamp: new Image(),
-            water: new Image(),
-            lava: new Image(),
-            subterrarean: new Image(),
-            
-            //castles
-            castle: new Image(),
-            necro: new Image()
-        };
-       
-        //Terrain
-        images.grass.src = 'assets/grass.png';
-        images.sand.src = 'assets/sand.png';
-        images.dirt.src = 'assets/dirt.png';
-        images.rough.src = 'assets/rough.png';
-        images.snow.src = 'assets/snow.png';
-        images.swamp.src = 'assets/swamp.png';
-        images.water.src = 'assets/water.png';
-        images.lava.src = 'assets/lava.png';
-        images.subterrarean.src = 'assets/subterrarean.png';
-
-
-        //castles
-        images.castle.src = 'assets/castle.png';
-        images.necro.src = 'assets/necro.png';
-
-        window.onload = () => {
-            resizeCanvas();
-            loadImages();
-        };
-        window.onresize = resizeCanvas;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            initializeHexagons();
-            loadHexagonsFromStorage(); // Load saved hexagon state
-            drawHexagonalGrid();
-        }
-
-        function initializeHexagons() {
-            hexagons = [];
-            const numRows = Math.floor(canvas.height / ySpacing);
-            const numHexPerRow = Math.floor(canvas.width / xSpacing);
-
-            for (let row = 0; row < numRows; row++) {
-                for (let col = 0; col < numHexPerRow; col++) {
-                    hexagons.push({
-                        x: col * xSpacing + ((row % 2) * xSpacing / 2),
-                        y: row * ySpacing,
-                        terrain: 'none',
-                        objects: 'none',
-                        level: '0'
-                    });
-                }
-            }
-        }
-
-        function drawHexagonalGrid() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            hexagons.forEach(hex => drawHexagon(hex.x, hex.y, hex));
-        }
-
-        function drawHexagon(x, y, hex) {
-            const points = [];
-            for (let i = 0; i < 6; i++) {
-                const angle = Math.PI / 3 * i - Math.PI / 6;
-                points.push({
-                    x: x + sideLength * Math.cos(angle),
-                    y: y + sideLength * Math.sin(angle)
-                });
-            }
-
-            ctx.beginPath();
-            points.forEach((point, index) => {
-                if (index === 0) ctx.moveTo(point.x, point.y);
-                else ctx.lineTo(point.x, point.y);
-            });
-            ctx.closePath();
-            ctx.strokeStyle = 'lightgray';
-            ctx.stroke();
-
-            if (hex.terrain !== 'none') {
-                drawImageLayer(hex.terrain, x, y);
-            }
-
-            if (hex.objects !== 'none') {
-                drawImageLayer(hex.objects, x, y);
-            }
-
-            if (hex.level !== '0') {
-                ctx.fillStyle = 'black';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.font = '12px Arial';
-                ctx.fillText(`L${hex.level}`, x, y);
-            }
-        }
-
-        function drawImageLayer(type, x, y) {
-            const img = images[type];
-            ctx.save();
-            ctx.beginPath();
-            for (let i = 0; i < 6; i++) {
-                const angle = Math.PI / 3 * i - Math.PI / 6;
-                if (i === 0) {
-                    ctx.moveTo(x + sideLength * Math.cos(angle), y + sideLength * Math.sin(angle));
-                } else {
-                    ctx.lineTo(x + sideLength * Math.cos(angle), y + sideLength * Math.sin(angle));
-                }
-            }
-            ctx.closePath();
-            ctx.clip();
-            ctx.drawImage(img, x - sideLength, y - sideLength, sideLength * 2, sideLength * 2);
-            ctx.restore();
-        }
-
-        function resetMap() {
-            hexagons.forEach(hex => {
-                hex.terrain = 'none';
-                hex.objects = 'none';
-                hex.level = '0';
-            });
-            drawHexagonalGrid();
-            saveHexagonsToStorage(); // Save the reset state
-        }
-
-        canvas.addEventListener('click', function(event) {
-            const rect = canvas.getBoundingClientRect();
-            const clickX = event.clientX - rect.left;
-            const clickY = event.clientY - rect.top;
-
-            hexagons.forEach(hex => {
-                const distance = Math.sqrt((clickX - hex.x) ** 2 + (clickY - hex.y) ** 2);
-                if (distance < sideLength && currentAction && currentValue) {
-                    if (currentAction === 'objects' && hex.terrain === 'none') {
-                        showError('Cannot place an object on a tile with no terrain.');
-                    } else {
-                        hex[currentAction] = currentValue;
-                        clearError();
-                        drawHexagonalGrid();
-                        saveHexagonsToStorage(); // Save state after each change
-                    }
-                }
-            });
-        });
-
-        function setAction(action, value) {
-            currentAction = action;
-            currentValue = value;
-        }
-
-        function loadImages() {
-            const promises = [];
-            for (const key in images) {
-                const img = images[key];
-                promises.push(new Promise((resolve) => {
-                    img.onload = resolve;
-                }));
-            }
-            Promise.all(promises).then(drawHexagonalGrid);
-        }
-
-        function updateButtons() {
-            const tileType = document.getElementById('tileType').value;
-            document.getElementById('terrainButtons').style.display = (tileType === 'terrain') ? 'block' : 'none';
-            document.getElementById('objectsButtons').style.display = (tileType === 'objects') ? 'block' : 'none';
-            document.getElementById('levelButtons').style.display = (tileType === 'level') ? 'block' : 'none';
-        }
-
-        function saveHexagonsToStorage() {
-            localStorage.setItem('hexagons', JSON.stringify(hexagons));
-        }
-
-        function loadHexagonsFromStorage() {
-            const savedHexagons = localStorage.getItem('hexagons');
-            if (savedHexagons) {
-                hexagons = JSON.parse(savedHexagons);
-            }
-        }
-
-        function showError(message) {
-            const statusElement = document.getElementById('status');
-            statusElement.innerText = message;
-            statusElement.classList.add('error');
-        }
-
-        function clearError() {
-            const statusElement = document.getElementById('status');
-            statusElement.innerText = '';
-            statusElement.classList.remove('error');
-        }
-    </script>
-
-    <div id="status" class="status"></div> <!-- Empty status div -->
+    <script src="script.js"></script>
+    <div id="status" class="status"></div>
 </body>
 </html>
