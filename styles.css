@@ -1,0 +1,101 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    background: url('assets/fog.png') repeat;
+}
+
+canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+}
+
+.controls {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
+    background: url('assets/leather.png') repeat;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 1;
+}
+
+.golden-line {
+    width: 100%;
+    height: 2px;
+    background-color: #FDC22D;
+    margin: 10px 0;
+}
+
+.controls h3 {
+    color: #FDC22D;
+    margin: 10px 0;
+}
+
+.controls select, .controls button {
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 16px;
+    width: 90%;
+}
+
+.controls button, .controls select {
+    background-color: #FDC22D;
+    border: 1px solid #000;
+    color: #000;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 3px;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.controls button:hover, .controls select:hover {
+    background-color: #6B4700;
+    color: #FDC22D;
+}
+
+.controls select option {
+    background-color: #FDC22D;
+    color: #000;
+}
+
+.controls select option:hover {
+    background-color: #6B4700;
+    color: #FDC22D;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 75%;
+}
+
+.button-container button {
+    width: 90%;  /* This makes buttons almost as large as the dropdown */
+}
+
+.status {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
+.error {
+    color: red;
+}
