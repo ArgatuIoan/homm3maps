@@ -27,6 +27,8 @@ const images = {
     fortress: new Image(),
     rampart: new Image(),
     inferno: new Image(),
+    conflux: new Image(),
+    cove: new Image(),
 };
 
 const imageSources = {
@@ -48,6 +50,8 @@ const imageSources = {
     fortress: 'assets/fortress.png',
     rampart: 'assets/rampart.png',
     inferno: 'assets/inferno.png',
+    conflux: 'assets/conflux.png',
+    cove: 'assets/cove.png',
 };
 
 function loadImages() {
@@ -175,7 +179,7 @@ function handleCanvasClick(event) {
             clickedHex.terrain = currentValue;
         } else if (currentAction === 'objects') {
             // Array of objects that require terrain to be set
-            const townObjects = ['castle', 'necro', 'tower', 'stronghold', 'dungeon', 'fortress', 'rampart', 'inferno'];
+            const townObjects = ['castle', 'necro', 'tower', 'stronghold', 'dungeon', 'fortress', 'rampart', 'inferno', 'conflux', 'cove' /* add other town names here */];
 
             // Check if currentValue is in the list of town objects
             if (townObjects.includes(currentValue)) {
@@ -200,6 +204,7 @@ function handleCanvasClick(event) {
         saveHexagonsToStorage(); // Save hexagon state
     }
 }
+
 
 function setAction(action, value) {
     currentAction = action;
@@ -235,13 +240,3 @@ function loadHexagonsFromStorage() {
         hexagons = JSON.parse(savedHexagons);
     }
 }
-
-// Function to reset the map
-function resetMap() {
-    initializeHexagons(); // Reinitialize hexagons
-    drawHexagonalGrid();  // Redraw grid
-    localStorage.removeItem('hexagons'); // Clear saved state in localStorage
-}
-
-// Add an event listener for the reset button
-document.getElementById('resetButton').addEventListener('click', resetMap);
