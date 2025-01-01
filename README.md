@@ -5,3 +5,4 @@
 - add reference image
 - polish graphic interface
 - add rest of the assets (pain)
+- add editor in a library
