@@ -7,6 +7,7 @@ const sideLength = 30; // Adjust size to fit more hexagons
 const xSpacing = 52; // Calculated from side length
 const ySpacing = 45; // Calculated from side length
 let selectedHex = null; // To keep track of the selected hexagon
+let gridVisible = true; // Initially, the grid is visible
 
 // Preload images
 const images = {
@@ -112,8 +113,23 @@ function initializeHexagons() {
 }
 
 function drawHexagonalGrid() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    hexagons.forEach(hex => drawHexagon(hex.x, hex.y, hex));
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas first
+
+    hexagons.forEach(hex => {
+        if (gridVisible) { // Only draw the grid if it's set to be visible
+            drawHexagon(hex.x, hex.y, hex);
+        }
+        // Always draw the terrain and objects regardless of the grid visibility
+        if (hex.terrain !== 'none') {
+            drawImageLayer(hex.terrain, hex.x, hex.y);
+        }
+        if (hex.objects !== 'none') {
+            drawImageLayer(hex.objects, hex.x, hex.y);
+        }
+        if (hex.level !== '0') {
+            drawImageLayer('lvl1', hex.x, hex.y); // Assumes that any level "not 0" should display the level 1 image
+        }
+    });
 }
 
 function drawHexagon(x, y, hex) {
@@ -172,34 +188,48 @@ function handleCanvasClick(event) {
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
 
-    selectedHex = hexagons.find(hex => {
+    const clickedHex = hexagons.find(hex => {
         const dx = offsetX - hex.x;
         const dy = offsetY - hex.y;
         return Math.sqrt(dx * dx + dy * dy) < sideLength;
     });
 
-    if (selectedHex) {
-        updateStatus("Hexagon selected.");
-        if (currentAction === 'terrain') {
-            selectedHex.terrain = currentValue;
-        } else if (currentAction === 'castles' || currentAction === 'mines' || currentAction === 'objects') {
-            if (selectedHex.terrain !== 'none') {
-                selectedHex.objects = currentValue;
-            } else {
-                showError("Cannot place objects on an empty tile!");
-                return;
-            }
-        } else if (currentAction === 'level') {
-            if (selectedHex.terrain !== 'none' || selectedHex.objects !== 'none') {
-                selectedHex.level = currentValue;
-            } else {
-                showError("Cannot assign a level to an empty tile!");
-                return;
-            }
+    if (clickedHex) {
+        switch (currentAction) {
+            case 'terrain':
+                clickedHex.terrain = currentValue;
+                break;
+            case 'castles':
+            case 'mines':
+            case 'objects':
+                if (clickedHex.terrain !== 'none') {
+                    clickedHex.objects = currentValue;
+                } else {
+                    showError("Cannot place objects on an empty tile!");
+                    return;
+                }
+                break;
+            case 'level':
+                if (clickedHex.terrain !== 'none' || clickedHex.objects !== 'none') {
+                    clickedHex.level = currentValue;
+                } else {
+                    showError("Cannot assign a level to an empty tile!");
+                    return;
+                }
+                break;
+            case 'clear':
+                // Clear the contents of the hexagon
+                clickedHex.terrain = 'none';
+                clickedHex.objects = 'none';
+                clickedHex.level = '0';
+                updateStatus("Hexagon cleared.");
+                break;
+            default:
+                updateStatus("No action selected.");
+                break;
         }
-
         drawHexagonalGrid();
-        saveHexagonsToStorage();
+        saveHexagonsToStorage(); // Save hexagon state
     } else {
         updateStatus("No hexagon selected.");
     }
@@ -208,6 +238,7 @@ function handleCanvasClick(event) {
 function setAction(action, value) {
     currentAction = action;
     currentValue = value;
+    updateStatus(`Action set to ${action}`);
 }
 
 function updateButtons() {
@@ -272,3 +303,10 @@ function updateStatus(message) {
         status.className = 'status';
     }, 5000);  // Clears the message after 5 seconds
 }
+
+function toggleGridVisibility() {
+    gridVisible = !gridVisible; // Toggle the visibility state
+    drawHexagonalGrid(); // Redraw the grid with the new visibility state
+    updateStatus(gridVisible ? "Grid is visible." : "Grid is hidden."); // Provide feedback on grid state
+}
+
