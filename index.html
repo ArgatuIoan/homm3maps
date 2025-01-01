@@ -9,7 +9,10 @@
     <canvas id="myCanvas"></canvas>
     <div class="controls">
         <button id="resetButton" onclick="resetMap()">Reset Map</button>
-        <button id="clearFieldButton" onclick="clearSelectedHex()">Clear Field</button>
+        <button onclick="setAction('clear', null)">Clear Field</button>
+        <button onclick="toggleGridVisibility()">Toggle Grid</button>
+        <button onclick="exportMap()">Export Map (TBA)</button>
+
         <div class="golden-line"></div>
         <h3>Tiles:</h3>
         <select id="tileType" onchange="updateButtons()">
