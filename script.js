@@ -6,6 +6,7 @@ let hexagons = [];
 const sideLength = 30; // Adjust size to fit more hexagons
 const xSpacing = 52; // Calculated from side length
 const ySpacing = 45; // Calculated from side length
+let selectedHex = null; // To keep track of the selected hexagon
 
 // Preload images
 const images = {
@@ -18,7 +19,7 @@ const images = {
     water: new Image(),
     lava: new Image(),
     subterrarean: new Image(),
-    lvl1: new Image(),  // Level 1 image
+    lvl1: new Image(),
     castle: new Image(),
     necro: new Image(),
     tower: new Image(),
@@ -29,6 +30,9 @@ const images = {
     inferno: new Image(),
     conflux: new Image(),
     cove: new Image(),
+    goldMine: new Image(), // New images for mines
+    oreMine: new Image(),
+    lumberMill: new Image()
 };
 
 const imageSources = {
@@ -41,7 +45,7 @@ const imageSources = {
     water: 'assets/water.png',
     lava: 'assets/lava.png',
     subterrarean: 'assets/subterrarean.png',
-    lvl1: 'assets/lvl-1.png', // Ensure this is the correct path
+    lvl1: 'assets/lvl-1.png',
     castle: 'assets/castle.png',
     necro: 'assets/necro.png',
     tower: 'assets/tower.png',
@@ -51,7 +55,7 @@ const imageSources = {
     rampart: 'assets/rampart.png',
     inferno: 'assets/inferno.png',
     conflux: 'assets/conflux.png',
-    cove: 'assets/cove.png',
+    cove: 'assets/cove.png'
 };
 
 function loadImages() {
@@ -168,43 +172,38 @@ function handleCanvasClick(event) {
     const offsetX = event.clientX - rect.left;
     const offsetY = event.clientY - rect.top;
 
-    const clickedHex = hexagons.find(hex => {
+    selectedHex = hexagons.find(hex => {
         const dx = offsetX - hex.x;
         const dy = offsetY - hex.y;
         return Math.sqrt(dx * dx + dy * dy) < sideLength;
     });
 
-    if (clickedHex) {
+    if (selectedHex) {
+        updateStatus("Hexagon selected.");
         if (currentAction === 'terrain') {
-            clickedHex.terrain = currentValue;
-        } else if (currentAction === 'objects') {
-            // Array of objects that require terrain to be set
-            const townObjects = ['castle', 'necro', 'tower', 'stronghold', 'dungeon', 'fortress', 'rampart', 'inferno', 'conflux', 'cove' /* add other town names here */];
-
-            // Check if currentValue is in the list of town objects
-            if (townObjects.includes(currentValue)) {
-                if (clickedHex.terrain !== 'none') {
-                    clickedHex.objects = currentValue;
-                } else {
-                    showError('Cannot place a castle on an empty tile!');
-                }
+            selectedHex.terrain = currentValue;
+        } else if (currentAction === 'castles' || currentAction === 'mines' || currentAction === 'objects') {
+            if (selectedHex.terrain !== 'none') {
+                selectedHex.objects = currentValue;
             } else {
-                clickedHex.objects = currentValue;
+                showError("Cannot place objects on an empty tile!");
+                return;
             }
         } else if (currentAction === 'level') {
-            // Check if terrain is not 'none' before setting the level
-            if (clickedHex.terrain !== 'none') {
-                clickedHex.level = currentValue;
+            if (selectedHex.terrain !== 'none' || selectedHex.objects !== 'none') {
+                selectedHex.level = currentValue;
             } else {
-                showError('Cannot place level on an empty tile!');
+                showError("Cannot assign a level to an empty tile!");
+                return;
             }
         }
 
         drawHexagonalGrid();
-        saveHexagonsToStorage(); // Save hexagon state
+        saveHexagonsToStorage();
+    } else {
+        updateStatus("No hexagon selected.");
     }
 }
-
 
 function setAction(action, value) {
     currentAction = action;
@@ -214,7 +213,8 @@ function setAction(action, value) {
 function updateButtons() {
     const selectedType = document.getElementById('tileType').value;
     document.getElementById('terrainButtons').style.display = selectedType === 'terrain' ? 'flex' : 'none';
-    document.getElementById('objectsButtons').style.display = selectedType === 'objects' ? 'flex' : 'none';
+    document.getElementById('castlesButtons').style.display = selectedType === 'castles' ? 'flex' : 'none';
+    document.getElementById('minesButtons').style.display = selectedType === 'mines' ? 'flex' : 'none';
     document.getElementById('levelButtons').style.display = selectedType === 'level' ? 'flex' : 'none';
 }
 
@@ -228,15 +228,47 @@ function showError(message) {
     }, 2000);
 }
 
-// Function to save hexagons to localStorage
+function resetMap() {
+    // Clear the hexagons array
+    hexagons = [];
+    initializeHexagons();  // Reinitialize the grid with empty hexagons
+    drawHexagonalGrid();   // Redraw the grid to reflect the reset state
+    localStorage.removeItem('hexagons'); // Remove the saved state from local storage
+    console.log("Map has been reset.");
+    updateStatus("Map has been reset and cleared.");
+}
+
+
 function saveHexagonsToStorage() {
     localStorage.setItem('hexagons', JSON.stringify(hexagons));
 }
 
-// Function to load hexagons from localStorage
 function loadHexagonsFromStorage() {
     const savedHexagons = localStorage.getItem('hexagons');
     if (savedHexagons) {
         hexagons = JSON.parse(savedHexagons);
     }
+}
+
+function clearSelectedHex() {
+    if (selectedHex) {
+        selectedHex.terrain = 'none';
+        selectedHex.objects = 'none';
+        selectedHex.level = '0';
+        drawHexagonalGrid();
+        saveHexagonsToStorage();
+        updateStatus("Selected hexagon cleared.");
+    } else {
+        updateStatus("No hexagon selected to clear.");
+    }
+}
+
+function updateStatus(message) {
+    const status = document.getElementById('status'); // Ensure there's an element with id "status" in your HTML
+    status.textContent = message;
+    status.className = 'status';
+    setTimeout(() => {
+        status.textContent = '';
+        status.className = 'status';
+    }, 5000);  // Clears the message after 5 seconds
 }
