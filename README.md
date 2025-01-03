@@ -1,6 +1,6 @@
 # homm3maps
 
-##To Be Added:
+## To Be Added:
 - export map as png (hexagon 41mm diameter)
 - add reference image
 - polish graphic interface
